@@ -1,1 +1,1 @@
-# shiden-chaincode
+# Shiden Chaincodes - Smart Contracts for Shiden Ledger
