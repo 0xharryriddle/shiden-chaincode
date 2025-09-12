@@ -1,12 +1,14 @@
-package contracts
+package main
 
 import (
-	"github.com/0xharryriddle/shiden-chaincode/contracts/chaincode"
-	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/0xharryriddle/shiden-chaincode/contracts/chaincode/chaincode"
+	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
 
 func main() {
-	notarizationContract, err := contractapi.NewChaincode(&chaincode.NotarizationContract{})
+	notarizationContract, err := contractapi.NewChaincode(
+		&chaincode.NotarizationContract{},
+	)
 	if err != nil {
 		panic("Error creating notarization chaincode: " + err.Error())
 	}
