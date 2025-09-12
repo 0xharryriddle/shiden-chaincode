@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hyperledger/fabric-chaincode-go/pkg/cid"
-	statebased "github.com/hyperledger/fabric-chaincode-go/pkg/statebased"
-	"github.com/hyperledger/fabric-contract-api-go/contractapi"
+	"github.com/hyperledger/fabric-chaincode-go/v2/pkg/cid"
+	statebased "github.com/hyperledger/fabric-chaincode-go/v2/pkg/statebased"
+	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
 
 type PartyRef struct {
@@ -31,16 +31,16 @@ type Instrument struct {
 	InstrumentNo       string         `json:"instrumentNo"`
 	NotarizationOffice string         `json:"notarizationOffice"`
 	Province           string         `json:"province"`
-	Parties            []PartyRef     `json:"parties"`
+	Parties            []PartyRef     `json:"parties,omitempty"`
 	DocHash            string         `json:"docHash"`
 	OffchainURI        string         `json:"offchainUri"`
 	IssuedAt           string         `json:"issuedAt"`
 	Status             string         `json:"status"` // ISSUED|REVOKED
-	RevokedAt          *string        `json:"revokedAt,omitempty"`
-	RevokedReason      *string        `json:"revokedReason,omitempty"`
+	RevokedAt          string         `json:"revokedAt,omitempty"`
+	RevokedReason      string         `json:"revokedReason,omitempty"`
 	JournalSeq         int            `json:"journalSeq"`
 	QR                 string         `json:"qr"`
-	Signatures         []SignatureRef `json:"signatures"`
+	Signatures         []SignatureRef `json:"signatures,omitempty"`
 }
 
 type issuePayload struct {
@@ -48,12 +48,12 @@ type issuePayload struct {
 	CaseID       string         `json:"caseId"`
 	InstrumentNo string         `json:"instrumentNo"`
 	Province     string         `json:"province"`
-	Parties      []PartyRef     `json:"parties"`
+	Parties      []PartyRef     `json:"parties,omitempty"`
 	DocHash      string         `json:"docHash"`
 	OffchainURI  string         `json:"offchainUri"`
 	JournalSeq   int            `json:"journalSeq"`
 	QR           string         `json:"qr"`
-	Signatures   []SignatureRef `json:"signatures"`
+	Signatures   []SignatureRef `json:"signatures,omitempty"`
 }
 
 const (
@@ -65,36 +65,15 @@ type NotarizationTransactionContext struct {
 	contractapi.TransactionContext
 }
 
+// NotarizationContract provides functions for managing notarization instruments
 type NotarizationContract struct {
 	contractapi.Contract
 }
 
+// GetName returns the contract name
 func (n *NotarizationContract) GetName() string {
 	return "NotarizationContract"
 }
-
-func (n *NotarizationContract) CreateTransactionContext() contractapi.SettableTransactionContextInterface {
-	return new(NotarizationTransactionContext)
-}
-
-func nowRFC3339(ctx contractapi.TransactionContextInterface) (string, error) {
-	ts, err := ctx.GetStub().GetTxTimestamp()
-	if err != nil {
-		return "", err
-	}
-	t := time.Unix(ts.Seconds, int64(ts.Nanos)).UTC()
-	return t.Format(time.RFC3339), nil
-}
-
-func getMSP(ctx contractapi.TransactionContextInterface) (string, error) {
-	return cid.GetMSPID(ctx.GetStub())
-}
-
-func getAttr(ctx contractapi.TransactionContextInterface, key string) (string, bool, error) {
-	return cid.GetAttributeValue(ctx.GetStub(), key)
-}
-
-func implicitCollName(msp string) string { return "_implicit_org_" + msp }
 
 func (s *NotarizationContract) mustRole(ctx contractapi.TransactionContextInterface, allowed ...string) error {
 	role, ok, err := getAttr(ctx, "role")
@@ -233,49 +212,70 @@ func (s *NotarizationContract) InstrumentVerify(ctx contractapi.TransactionConte
 	}, nil
 }
 
-func (s *NotarizationContract) InstrumentRevoke(ctx contractapi.TransactionContextInterface, id string, reason string) (*Instrument, error) {
+func (s *NotarizationContract) InstrumentRevoke(ctx contractapi.TransactionContextInterface, id string, reason string) (Instrument, error) {
 	// Cho phép SUPERVISOR của VPCC hoặc bất kỳ user của MOJMSP
 	msp, err := getMSP(ctx)
 	if err != nil {
-		return nil, err
+		return Instrument{}, err
 	}
 	if msp == "MOJMSP" { /* ok */
 	} else {
 		if err := s.mustRole(ctx, "SUPERVISOR"); err != nil {
-			return nil, err
+			return Instrument{}, err
 		}
 	}
 
 	inst, err := s.InstrumentGet(ctx, id)
 	if err != nil {
-		return nil, err
+		return Instrument{}, err
 	}
 	if inst.Status == REVOKED {
-		return inst, nil
+		return *inst, nil
 	}
 
 	t, _ := nowRFC3339(ctx)
 	inst.Status = REVOKED
-	inst.RevokedAt = &t
+	inst.RevokedAt = t
 	if reason != "" {
-		inst.RevokedReason = &reason
+		inst.RevokedReason = reason
 	}
 
 	key := "INS|" + inst.ID
 	b, _ := json.Marshal(inst)
 	if err := ctx.GetStub().PutState(key, b); err != nil {
-		return nil, err
+		return Instrument{}, err
 	}
 
 	// (tùy chọn) cập nhật SBE để yêu cầu MOJ phê duyệt mọi cập nhật tiếp theo
 	ep, _ := statebased.NewStateEP(nil)
 	if err := ep.AddOrgs(statebased.RoleTypePeer, "MOJMSP"); err != nil {
-		return nil, err
+		return Instrument{}, err
 	}
 	pol, _ := ep.Policy()
 	_ = ctx.GetStub().SetStateValidationParameter(key, pol)
 
 	evt, _ := json.Marshal(map[string]any{"id": inst.ID, "reason": reason})
 	_ = ctx.GetStub().SetEvent("instrument.revoked", evt)
-	return inst, nil
+	return *inst, nil
 }
+
+/* --------------------------------- Helpers -------------------------------- */
+
+func nowRFC3339(ctx contractapi.TransactionContextInterface) (string, error) {
+	ts, err := ctx.GetStub().GetTxTimestamp()
+	if err != nil {
+		return "", err
+	}
+	t := time.Unix(ts.Seconds, int64(ts.Nanos)).UTC()
+	return t.Format(time.RFC3339), nil
+}
+
+func getMSP(ctx contractapi.TransactionContextInterface) (string, error) {
+	return cid.GetMSPID(ctx.GetStub())
+}
+
+func getAttr(ctx contractapi.TransactionContextInterface, key string) (string, bool, error) {
+	return cid.GetAttributeValue(ctx.GetStub(), key)
+}
+
+func implicitCollName(msp string) string { return "_implicit_org_" + msp }
