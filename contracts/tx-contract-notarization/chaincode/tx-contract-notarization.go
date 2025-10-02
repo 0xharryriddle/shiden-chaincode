@@ -113,6 +113,3 @@ func (t *TxContractNotarizationContract) GetName() string {
 func (t *TxContractNotarizationContract) GetInfo() metadata.InfoMetadata {
 	return t.info
 }
-
-func (t *TxContractNotarizationContract) GetTransactionContextHandler
-
