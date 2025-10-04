@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/0xharryriddle/shiden-chaincode/contracts/chaincode/chaincode"
+	chaincode "github.com/0xharryriddle/shiden-chaincode/contracts/notarization/chaincode"
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
 
