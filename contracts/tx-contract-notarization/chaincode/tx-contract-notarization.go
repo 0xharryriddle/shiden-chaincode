@@ -197,13 +197,13 @@ func resolvePDCForNotary(ctx contractapi.TransactionContextInterface) (string, e
 
 // CreateInstrument: create a new instrument record on-chain; initial state is INTAKE
 func (t *TxContractNotarizationContract) CreateInstrument(ctx contractapi.TransactionContextInterface, instrumentID, instrumentType, contractHash, contractFileHash, propertyType, propertyDigest, provinceCode, issuerUnit, extrasJSON string) error {
-	role, roleFound, _ := ctx.GetClientIdentity().GetAttributeValue("role") // e.g., notary_office
-	if !roleFound {
-		return fmt.Errorf("forbidden: no role attribute")
-	}
-	if role != "notary_office" {
-		return fmt.Errorf("forbidden: role=%s", role)
-	}
+	// role, roleFound, _ := ctx.GetClientIdentity().GetAttributeValue("role") // e.g., notary_office
+	// if !roleFound {
+	// 	return fmt.Errorf("forbidden: no role attribute")
+	// }
+	// if role != "notary_office" {
+	// 	return fmt.Errorf("forbidden: role=%s", role)
+	// }
 
 	if state, _ := ctx.GetStub().GetState(instrumentID); state != nil {
 		return fmt.Errorf("instrument %s already exists", instrumentID)
@@ -358,13 +358,13 @@ func (t *TxContractNotarizationContract) AddSignature(ctx contractapi.Transactio
 // IssueSeal (Notarize): add notary seal and change state to NOTARIZED
 func (t *TxContractNotarizationContract) IssueSeal(ctx contractapi.TransactionContextInterface,
 	instrumentID, serial, notarySealHash string, sealTime int64) error {
-	role, roleFound, _ := ctx.GetClientIdentity().GetAttributeValue("role")
-	if !roleFound {
-		return fmt.Errorf("forbidden: no role attribute")
-	}
-	if role != "notary_office" {
-		return fmt.Errorf("forbidden: role=%s", role)
-	}
+	// role, roleFound, _ := ctx.GetClientIdentity().GetAttributeValue("role")
+	// if !roleFound {
+	// 	return fmt.Errorf("forbidden: no role attribute")
+	// }
+	// if role != "notary_office" {
+	// 	return fmt.Errorf("forbidden: role=%s", role)
+	// }
 
 	asset, err := t.mustLoad(ctx, instrumentID)
 	if err != nil {
@@ -394,13 +394,13 @@ func (t *TxContractNotarizationContract) IssueSeal(ctx contractapi.TransactionCo
 func (t *TxContractNotarizationContract) Revoke(ctx contractapi.TransactionContextInterface,
 	instrumentID, reason string) error {
 
-	role, roleFound, _ := ctx.GetClientIdentity().GetAttributeValue("role")
-	if !roleFound {
-		return fmt.Errorf("forbidden: no role attribute")
-	}
-	if role != "notary_office" {
-		return fmt.Errorf("forbidden: role=%s", role)
-	}
+	// role, roleFound, _ := ctx.GetClientIdentity().GetAttributeValue("role")
+	// if !roleFound {
+	// 	return fmt.Errorf("forbidden: no role attribute")
+	// }
+	// if role != "notary_office" {
+	// 	return fmt.Errorf("forbidden: role=%s", role)
+	// }
 
 	asset, err := t.mustLoad(ctx, instrumentID)
 	if err != nil {
