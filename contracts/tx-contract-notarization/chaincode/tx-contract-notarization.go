@@ -57,71 +57,25 @@ const (
 )
 
 /* ------------------------------- Data Models ------------------------------ */
-
-type RequestSession struct {
-	SessionID                 string   `json:"sessionId"`
-	RelatedDocumentsHash      []string `json:"relatedDocumentsHash"`
-	RelatedDocumentsHashFiles []string `json:"relatedDocumentsHashFiles"`
-}
-
-// Party with minimal on-chain footprint; Personally Identifiable Information (PII) in Private Data Collection (PDC)
-type Party struct {
-	PartyID          string `json:"partyId"`
-	Type             string `json:"type"`             // PERSON|ORGANIZATION
-	IdentityDigest   string `json:"identityDigest"`   // hash(PII canonical json)
-	PresentAtSigning bool   `json:"presentAtSigning"` // is presented at signing
-}
-
-type RelationshipLink struct {
-	FromPartyID string `json:"fromPartyId"`
-	ToPartyID   string `json:"toPartyId"`
-	Relation    string `json:"relation"` // PARENT/CHILD/SPOUSE/EMPLOYER/EMPLOYEE/LEGAL_REPRESENTATIVE/OTHER
-	Note        string `json:"note,omitempty"`
-}
-
-// Property “header” to profile loại tài sản (chi tiết trong PDC)
-type PropertyHeader struct {
-	PropertyID string `json:"propertyId"`
-	Type       string `json:"type"` // REAL_ESTATE|VEHICLE
-	Digest     string `json:"digest"`
-}
-
-type SignatureAttestation struct {
-	PartyID         string `json:"partyId"`
-	Method          string `json:"method"`       // WET|DIGITAL|FINGERPRINT
-	PayloadHash     string `json:"payloadHash"`  // hash of contract PDF
-	SignatureDER    string `json:"signatureDer"` // if DIGITAL; if WET storing in PDC
-	SignedAtUnix    int64  `json:"signedAt"`
-	EvidenceRefHash string `json:"evidenceRefHash,omitempty"` // image/video: hash
-}
-
-type NotarySeal struct {
-	NotaryMSP      string `json:"notaryMsp"`
-	NotaryUserID   string `json:"notaryUserId"`
-	NotarySealHash string `json:"notarySealHash"` // hash dấu/tem thời gian
-	SealTimeUnix   int64  `json:"sealTimeUnix"`
-}
-
 type InstrumentOnChain struct {
-	InstrumentID     string                 `json:"instrumentId"`
-	InstrumentType   string                 `json:"instrumentType"` // REALESTATE_SALE | VEHICLE_SALE | ...
-	Session          *RequestSession        `json:"session,omitempty"`
-	Parties          []Party                `json:"parties"`
-	Relationships    []RelationshipLink     `json:"relationships,omitempty"`
-	Property         *PropertyHeader        `json:"property"`
-	ContractHash     string                 `json:"contractHash"`     // hash(pdf normalized)
-	ContractFileHash string                 `json:"contractFileHash"` // hash(binary pdf)
-	NotarySeal       *NotarySeal            `json:"notarySeal,omitempty"`
-	Signatures       []SignatureAttestation `json:"signatures,omitempty"`
-	LegalStatus      string                 `json:"legalStatus"`     // INTAKE..NOTARIZED..REVOKED/REJECTED
-	EffectiveStatus  string                 `json:"effectiveStatus"` // ACTIVE|REVOKED
-	IssuerOrg        string                 `json:"issuerOrg,omitempty"`
-	IssuerUnit       string                 `json:"issuerUnit,omitempty"`
-	ProvinceCode     string                 `json:"provinceCode,omitempty"`
-	Extras           map[string]string      `json:"extras,omitempty"` // serial, lawVersion, hashAlg, etc.
-	CreatedAtUnix    int64                  `json:"createdAt"`
-	UpdatedAtUnix    int64                  `json:"updatedAt"`
-	Version          int                    `json:"version"`
+	InstrumentHash     string                 `json:"instrumentHash,omitempty"` // hash of the entire record (for integrity check)
+	InstrumentFileHash string                 `json:"instrumentFileHash,omitempty"`
+	InstrumentType     string                 `json:"instrumentType"` // REALESTATE_SALE | VEHICLE_SALE | ...
+	Session            *RequestSession        `json:"session,omitempty"`
+	Parties            []Party                `json:"parties"`
+	Relationships      []RelationshipLink     `json:"relationships,omitempty"`
+	Property           *PropertyHeader        `json:"property"`
+	NotarySeal         *NotarySeal            `json:"notarySeal,omitempty"`
+	Signatures         []SignatureAttestation `json:"signatures,omitempty"`
+	LegalStatus        string                 `json:"legalStatus"`     // INTAKE..NOTARIZED..REVOKED/REJECTED
+	EffectiveStatus    string                 `json:"effectiveStatus"` // ACTIVE|REVOKED
+	IssuerOrg          string                 `json:"issuerOrg,omitempty"`
+	IssuerUnit         string                 `json:"issuerUnit,omitempty"`
+	ProvinceCode       string                 `json:"provinceCode,omitempty"`
+	Extras             map[string]string      `json:"extras,omitempty"` // serial, lawVersion, hashAlg, etc.
+	CreatedAtUnix      int64                  `json:"createdAt"`
+	UpdatedAtUnix      int64                  `json:"updatedAt"`
+	Version            int                    `json:"version"`
 }
 
 /* --------------------------- Contract Definition -------------------------- */
