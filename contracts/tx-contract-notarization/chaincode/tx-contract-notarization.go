@@ -57,7 +57,21 @@ const (
 )
 
 /* ------------------------------- Data Models ------------------------------ */
-type InstrumentOnChain struct {
+
+type BaseRecord struct {
+	OrgId string `json:"orgId,omitempty"`
+	Timestamp int64  `json:"timestamp,omitempty"`
+	OffchainRef string `json:"offchainRef,omitempty"` // e.g., URL or IPFS hash
+	SchemaVersion string `json:"schemaVersion,omitempty"`
+}
+
+type AttestationRecord struct {
+	BaseRecord
+	DocHash string `json:"docHash,omitempty"` // hash of the signed payload
+	HashOriginalFile string `json:"hashFile,omitempty"`
+}
+
+type CertificateOnChain struct {
 	InstrumentHash     string                 `json:"instrumentHash,omitempty"` // hash of the entire record (for integrity check)
 	InstrumentFileHash string                 `json:"instrumentFileHash,omitempty"`
 	InstrumentType     string                 `json:"instrumentType"` // REALESTATE_SALE | VEHICLE_SALE | ...
@@ -77,6 +91,8 @@ type InstrumentOnChain struct {
 	UpdatedAtUnix      int64                  `json:"updatedAt"`
 	Version            int                    `json:"version"`
 }
+
+type InstrumentBatch
 
 /* --------------------------- Contract Definition -------------------------- */
 
